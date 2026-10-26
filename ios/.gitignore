@@ -1,0 +1,9 @@
+.build/
+build/
+*.xcodeproj
+Payload/
+*.ipa
+App/Info.plist
+BroadcastExtension/Info.plist
+App/*.entitlements
+BroadcastExtension/*.entitlements

@@ -1,0 +1,36 @@
+name: iOS OMO Cast
+on:
+  push:
+    paths: ["ios/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Core self-test (protocol, scaling, encoder)
+        working-directory: ios/OMOCastCore
+        run: swift run -c release omocast-selftest
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Build for iOS device (unsigned)
+        run: |
+          xcodebuild -project OMOCast.xcodeproj -scheme OMOCast -configuration Release \
+            -destination 'generic/platform=iOS' -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO build
+      - name: Package unsigned IPA (sign with your Apple ID via Sideloadly/AltStore, or open in Xcode)
+        run: |
+          mkdir -p Payload
+          cp -R build/Build/Products/Release-iphoneos/OMOCast.app Payload/
+          ls Payload/OMOCast.app/PlugIns
+          zip -qry OMOCast-unsigned.ipa Payload
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OMOCast-unsigned-ipa
+          path: ios/OMOCast-unsigned.ipa

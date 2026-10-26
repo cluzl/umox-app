@@ -1,0 +1,61 @@
+# OMO Cast (iOS): generate the Xcode project with `xcodegen generate` in this folder.
+# Signing: set DEVELOPMENT_TEAM and change the bundle id prefix + App Group (also in OMOCastSettings.swift).
+name: OMOCast
+options:
+  bundleIdPrefix: com.umox
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: ""
+packages:
+  OMOCastCore:
+    path: OMOCastCore
+targets:
+  OMOCast:
+    type: application
+    platform: iOS
+    sources: [App]
+    dependencies:
+      - package: OMOCastCore
+      - target: OMOCastBroadcast
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: OMO Cast
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait, UIInterfaceOrientationLandscapeLeft, UIInterfaceOrientationLandscapeRight]
+        NSLocalNetworkUsageDescription: Streams your screen to the OMO X speedometer over its Wi-Fi.
+    entitlements:
+      path: App/OMOCast.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.umox.omocast]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.umox.omocast
+  OMOCastBroadcast:
+    type: app-extension
+    platform: iOS
+    sources: [BroadcastExtension]
+    dependencies:
+      - package: OMOCastCore
+      - sdk: ReplayKit.framework
+    info:
+      path: BroadcastExtension/Info.plist
+      properties:
+        CFBundleDisplayName: OMO X
+        NSLocalNetworkUsageDescription: Streams your screen to the OMO X speedometer over its Wi-Fi.
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.broadcast-services-upload
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).SampleHandler
+          RPBroadcastProcessMode: RPBroadcastProcessModeSampleBuffer
+    entitlements:
+      path: BroadcastExtension/OMOCastBroadcast.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.umox.omocast]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.umox.omocast.broadcast
