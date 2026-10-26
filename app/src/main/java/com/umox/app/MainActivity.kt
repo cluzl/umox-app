@@ -43,6 +43,8 @@ class MainActivity : AppCompatActivity() {
 
     private companion object {
         const val ACTION_USB_PERMISSION = "com.umox.app.USB_PERMISSION"
+        // Rilis DiPlay & build uji (hudtest), plus fork AndroidPlay.
+        val DIPLAY_PACKAGES = listOf("com.shihab.diplay", "com.shihab.diplay.hudtest", "com.androidplay.app")
     }
 
     private lateinit var tvConsoleLog: TextView
@@ -71,6 +73,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnStartStream: MaterialButton
     private lateinit var btnOpenGoogleMaps: MaterialButton
     private lateinit var btnCarplay: MaterialButton
+    private lateinit var btnCarplayDiplay: MaterialButton
     private lateinit var etCarplaySize: EditText
     private lateinit var etTargetIp: EditText
 
@@ -110,9 +113,27 @@ class MainActivity : AppCompatActivity() {
             btnStartStream.setBackgroundColor(ContextCompat.getColor(this, R.color.neon_red))
             tvStreamBadge.text = "STREAMING (960x360)"
             tvStreamBadge.setTextColor(ContextCompat.getColor(this, R.color.neon_green))
+            if (openDiplayAfterCapture) {
+                openDiplayAfterCapture = false
+                launchDiplay()
+            }
         } else {
+            openDiplayAfterCapture = false
             log("Izin rekam layar dibatalkan.")
         }
+    }
+
+    /** Tombol CarPlay (DiPlay): mirror layar dulu, lalu buka DiPlay di depan agar CarPlay ikut ter-cast. */
+    private var openDiplayAfterCapture = false
+
+    private fun launchDiplay() {
+        val intent = DIPLAY_PACKAGES.firstNotNullOfOrNull { packageManager.getLaunchIntentForPackage(it) }
+        if (intent == null) {
+            log("⚠ DiPlay belum terpasang. Unduh dari github.com/shihabal3amri/DiPlay/releases")
+            return
+        }
+        log("🍎 Membuka DiPlay; CarPlay akan tampil di speedometer.")
+        startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
     private val permissionLauncher = registerForActivityResult(
@@ -169,6 +190,7 @@ class MainActivity : AppCompatActivity() {
         btnStartStream = findViewById(R.id.btnStartStream)
         btnOpenGoogleMaps = findViewById(R.id.btnOpenGoogleMaps)
         btnCarplay = findViewById(R.id.btnCarplay)
+        btnCarplayDiplay = findViewById(R.id.btnCarplayDiplay)
         etCarplaySize = findViewById(R.id.etCarplaySize)
         etTargetIp = findViewById(R.id.etTargetIp)
 
@@ -367,6 +389,15 @@ class MainActivity : AppCompatActivity() {
                 tvStreamBadge.text = "STANDBY"
                 tvStreamBadge.setTextColor(ContextCompat.getColor(this, R.color.neon_amber))
             }
+        }
+
+        btnCarplayDiplay.setOnClickListener {
+            if (ScreenCastService.isStreamingActive) {
+                launchDiplay() // mirror sudah jalan; cukup bawa DiPlay ke depan
+                return@setOnClickListener
+            }
+            openDiplayAfterCapture = true
+            screenCaptureLauncher.launch(mediaProjectionManager.createScreenCaptureIntent())
         }
 
         btnCarplay.setOnClickListener {

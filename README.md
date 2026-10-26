@@ -35,6 +35,20 @@ Proyek ini dibangun untuk mengatasi masalah konsumsi daya dan *overheating* ekst
 
 ---
 
+## 🍎 Apple CarPlay tanpa dongle (DiPlay)
+
+Tombol **Apple CarPlay (DiPlay)**: mirror layar HP ke speedometer, lalu membuka
+[DiPlay](https://github.com/shihabal3amri/DiPlay) (penerima CarPlay untuk Android). iPhone dicolok ke HP via USB.
+
+1. HP Android cadangan: pasang DiPlay + UMOX, `adb shell wm size 1920x720` dan `adb shell wm density 240`
+   (rasio 8:3 sama dengan speedometer → CarPlay 1920x720 penuh, tanpa bar hitam). Kembalikan: `wm size reset; wm density reset`.
+2. Pairing HP ke motor sekali via aplikasi resmi, lalu *force-stop* aplikasi resmi.
+3. Developer options → **Stay awake**; colok iPhone ke HP (kabel data).
+4. UMOX → **Apple CarPlay (DiPlay)** → "Share entire screen" → di DiPlay tekan **Connect with USB** → izinkan CarPlay di iPhone.
+
+DiPlay memakai identitas aksesori eksperimental (bukan sertifikasi MFi resmi); bisa berhenti diterima setelah update iOS.
+Bila itu terjadi, pakai jalur dongle di bawah.
+
 ## 🍎 Apple CarPlay (via dongle)
 
 Speedometer OMO X hanya decoder H.264, bukan penerima CarPlay (tidak ada chip/sertifikat MFi Apple).

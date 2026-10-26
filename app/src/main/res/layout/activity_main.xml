@@ -682,6 +682,20 @@
                 app:cornerRadius="10dp"
                 android:layout_marginBottom="8dp" />
 
+            <!-- Apple CarPlay tanpa dongle: DiPlay (iPhone via USB) + mirror layar ke speedometer -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnCarplayDiplay"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Apple CarPlay (DiPlay)"
+                android:textAllCaps="false"
+                android:textColor="@color/bg_dark"
+                android:textSize="13.5sp"
+                android:textStyle="bold"
+                app:backgroundTint="@color/neon_green"
+                app:cornerRadius="10dp"
+                android:layout_marginBottom="8dp" />
+
             <!-- Apple CarPlay via dongle Carlinkit CPC200-CCPA (USB OTG) -->
             <LinearLayout
                 android:layout_width="match_parent"
