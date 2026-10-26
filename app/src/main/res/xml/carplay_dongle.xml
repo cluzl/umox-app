@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Carlinkit CPC200-CCPA (vendor 0x1314 = 4884, product 0x1520/0x1521) + SKU alternatif 0x08E4:0x01C0 -->
+<resources>
+    <usb-device vendor-id="4884" product-id="5408" />
+    <usb-device vendor-id="4884" product-id="5409" />
+    <usb-device vendor-id="2276" product-id="448" />
+</resources>

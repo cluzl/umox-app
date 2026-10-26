@@ -2,15 +2,18 @@ package com.umox.app
 
 import android.Manifest
 import android.app.Activity
+import android.app.PendingIntent
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.hardware.usb.UsbManager
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.view.KeyEvent
 import android.widget.EditText
 import android.widget.ScrollView
 import android.widget.TextView
@@ -28,6 +31,7 @@ import com.umox.app.ble.BleSniffer
 import com.umox.app.ble.GattExplorer
 import com.umox.app.probe.PortScanner
 import com.umox.app.config.AppConfig
+import com.umox.app.stream.CarplayDongle
 import com.umox.app.stream.ScreenCastService
 import com.umox.app.wifi.WifiP2pProbe
 import kotlinx.coroutines.launch
@@ -36,6 +40,10 @@ import java.util.Date
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
+
+    private companion object {
+        const val ACTION_USB_PERMISSION = "com.umox.app.USB_PERMISSION"
+    }
 
     private lateinit var tvConsoleLog: TextView
     private lateinit var scrollLog: ScrollView
@@ -62,6 +70,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnTestPattern: MaterialButton
     private lateinit var btnStartStream: MaterialButton
     private lateinit var btnOpenGoogleMaps: MaterialButton
+    private lateinit var btnCarplay: MaterialButton
+    private lateinit var etCarplaySize: EditText
     private lateinit var etTargetIp: EditText
 
     private lateinit var bleSniffer: BleSniffer
@@ -158,6 +168,8 @@ class MainActivity : AppCompatActivity() {
         btnTestPattern = findViewById(R.id.btnTestPattern)
         btnStartStream = findViewById(R.id.btnStartStream)
         btnOpenGoogleMaps = findViewById(R.id.btnOpenGoogleMaps)
+        btnCarplay = findViewById(R.id.btnCarplay)
+        etCarplaySize = findViewById(R.id.etCarplaySize)
         etTargetIp = findViewById(R.id.etTargetIp)
 
         mediaProjectionManager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -357,6 +369,38 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        btnCarplay.setOnClickListener {
+            if (ScreenCastService.isStreamingActive) {
+                startService(Intent(this, ScreenCastService::class.java).apply { action = ScreenCastService.ACTION_STOP })
+                btnCarplay.text = "Apple CarPlay (Dongle)"
+                tvStreamBadge.text = "STANDBY"
+                return@setOnClickListener
+            }
+            val usb = getSystemService(Context.USB_SERVICE) as UsbManager
+            val dongle = CarplayDongle.find(usb)
+            if (dongle != null && !usb.hasPermission(dongle)) {
+                log("Meminta izin USB untuk dongle CarPlay, lalu tekan tombol lagi...")
+                usb.requestPermission(
+                    dongle,
+                    PendingIntent.getBroadcast(this, 0, Intent(ACTION_USB_PERMISSION).setPackage(packageName), PendingIntent.FLAG_MUTABLE),
+                )
+                return@setOnClickListener
+            }
+            val ip = etTargetIp.text.toString().trim().ifEmpty { AppConfig.defaultClusterIp }
+            val size = etCarplaySize.text.toString().trim()
+            log("🍎 Memulai Apple CarPlay via dongle ($size) ke $ip...")
+            val serviceIntent = Intent(this, ScreenCastService::class.java).apply {
+                action = ScreenCastService.ACTION_START_CARPLAY
+                putExtra(ScreenCastService.EXTRA_TARGET_IP, ip)
+                putExtra(ScreenCastService.EXTRA_VIDEO_PORT, 9528)
+                putExtra(ScreenCastService.EXTRA_CTRL_PORT, 9527)
+                putExtra(ScreenCastService.EXTRA_CARPLAY_SIZE, size)
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(serviceIntent) else startService(serviceIntent)
+            btnCarplay.text = "⏹ Hentikan CarPlay"
+            tvStreamBadge.text = "CARPLAY"
+        }
+
         btnStartStream.setOnClickListener {
             if (!ScreenCastService.isStreamingActive) {
                 // Minta izin rekam layar
@@ -476,6 +520,18 @@ class MainActivity : AppCompatActivity() {
                 }
             )
         } catch (_: Exception) {}
+    }
+
+    /** Remote Bluetooth stang / keyboard -> kontrol CarPlay (layar cluster tidak punya touch). */
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        val dongle = ScreenCastService.activeDongle ?: return super.dispatchKeyEvent(event)
+        val cmd = when (event.action) {
+            KeyEvent.ACTION_DOWN -> if (event.repeatCount == 0) CarplayDongle.keyDownCommand(event.keyCode) else null
+            KeyEvent.ACTION_UP -> CarplayDongle.keyUpCommand(event.keyCode)
+            else -> null
+        }
+        if (cmd != null) dongle.sendCommand(cmd)
+        return CarplayDongle.keyDownCommand(event.keyCode) != null || super.dispatchKeyEvent(event)
     }
 
     private fun log(message: String) {

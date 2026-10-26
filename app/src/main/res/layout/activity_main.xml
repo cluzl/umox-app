@@ -682,7 +682,43 @@
                 app:cornerRadius="10dp"
                 android:layout_marginBottom="8dp" />
 
-            <!-- Stream Action Buttons -->
+            <!-- Apple CarPlay via dongle Carlinkit CPC200-CCPA (USB OTG) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="8dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnCarplay"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1.4"
+                    android:text="Apple CarPlay (Dongle)"
+                    android:textAllCaps="false"
+                    android:textColor="@color/bg_dark"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:backgroundTint="@color/neon_amber"
+                    app:cornerRadius="10dp"
+                    android:layout_marginEnd="6dp" />
+
+                <EditText
+                    android:id="@+id/etCarplaySize"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="1280x480"
+                    android:hint="WxH[@dpi]"
+                    android:contentDescription="Resolusi CarPlay, contoh 1280x480 atau 960x360"
+                    android:textColor="@color/text_primary"
+                    android:textSize="13sp"
+                    android:fontFamily="monospace"
+                    android:gravity="center"
+                    android:background="@drawable/bg_terminal"
+                    android:inputType="text"
+                    android:layout_marginStart="6dp" />
+            </LinearLayout>
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

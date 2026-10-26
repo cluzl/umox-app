@@ -57,7 +57,16 @@ class MediaEncoder(
         }
 
         mediaCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC).apply {
-            configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            try {
+                configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            } catch (e: Exception) {
+                // Sebagian encoder (mis. c2.android.avc) menolak key ini -> BAD_VALUE. Loop output
+                // sudah menyisipkan SPS/PPS manual ke tiap keyframe, jadi aman dikonfigurasi tanpa key.
+                onLog("Encoder menolak prepend-sps-pps, memakai injeksi SPS/PPS manual.")
+                reset()
+                format.removeKey("prepend-sps-pps-to-idr-frames")
+                configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            }
             inputSurface = createInputSurface()
             start()
         }
@@ -242,6 +251,24 @@ class MediaEncoder(
         } catch (e: Exception) {
             onLog("Gagal memulai HUD Cockpit: ${e.message}")
             stop()
+        }
+    }
+
+    /**
+     * Mode Apple CarPlay via dongle: decoder H.264 dongle (resolusi bebas) dirender ke input surface encoder,
+     * hasil diskalakan otomatis ke $width x $height. Dipakai bila CarPlay diminta di resolusi selain native cluster.
+     */
+    fun startSurfaceInput(): Surface? {
+        if (isEncoding) return inputSurface
+        return try {
+            initCodec()
+            startOutputLoop()
+            requestKeyFrame()
+            inputSurface
+        } catch (e: Exception) {
+            onLog("Gagal memulai encoder skala CarPlay: ${e.message}")
+            stop()
+            null
         }
     }
 

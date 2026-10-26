@@ -30,6 +30,46 @@ Proyek ini dibangun untuk mengatasi masalah konsumsi daya dan *overheating* ekst
    * Desain modern true AMOLED black (`#080B10`) dengan aksen Neon Cyan & Emerald Green.
    * Telemetry quick strip (BLE target, Host IP, Streaming port).
    * Fitur salin log satu ketukan (*one-tap copy to clipboard*).
+6. **Apple CarPlay di speedometer (via dongle Carlinkit CPC200-CCPA)**
+   * Lihat bagian [Apple CarPlay](#-apple-carplay-via-dongle) di bawah.
+
+---
+
+## 🍎 Apple CarPlay (via dongle)
+
+Speedometer OMO X hanya decoder H.264, bukan penerima CarPlay (tidak ada chip/sertifikat MFi Apple).
+Solusinya: dongle **Carlinkit CPC200-CCPA** (varian *"for Android head unit" / Autokit*, ~US$65), yang
+punya chip MFi asli, sebagai penerima CarPlay. UMOX meneruskan videonya ke speedometer.
+
+```
+iPhone ──CarPlay wireless──► CPC200-CCPA ──USB OTG──► HP Android (UMOX) ──Wi-Fi Direct 9527/9528──► OMO X 960x360
+```
+
+> Dongle "wired→wireless" untuk mobil yang sudah punya CarPlay **tidak bisa**. Harus CPC200-CCPA / Autokit.
+
+**Cara pakai**
+1. Pasangkan HP Android cadangan ke motor sekali via aplikasi resmi, lalu *force-stop* aplikasi resmi.
+2. Colok dongle ke HP lewat kabel OTG (dengan daya: dongle + HP butuh 5V dari motor).
+3. UMOX terbuka otomatis saat dongle dicolok → centang "selalu" untuk izin USB.
+4. Isi resolusi, tekan **Apple CarPlay (Dongle)**, lalu di iPhone pilih dongle di Bluetooth → CarPlay (pairing pertama ~30 dtk).
+
+**Resolusi** (kolom di samping tombol, format `WxH[@dpi]`):
+
+| Nilai | Jalur | Catatan |
+| :--- | :--- | :--- |
+| `1280x480` (default) | decode → skala GL → encode 960x360 | Rasio 8:3 sama, tinggi 480 = minimum layout CarPlay. Disarankan. |
+| `960x360` | **passthrough** (tanpa transcode, latensi terendah) | Di bawah resolusi standar CarPlay (800x480); layout bisa sempit. |
+| `1920x720@200` | decode → skala → encode | Resolusi standar Apple 1920x720 (8:3). Butuh HP lebih kuat. |
+
+**Kontrol**: speedometer tidak punya layar sentuh. Pakai remote Bluetooth stang / keyboard BT di HP:
+panah = navigasi (knob), Enter/OK = pilih, Back/Esc = kembali, `H` = Home, `S`/Search = Siri,
+tombol media = play/next/prev. Mode malam speedometer diteruskan ke CarPlay otomatis.
+
+**Audio**: dongle → HP (dimainkan di HP → headset helm via Bluetooth). Siri/telepon pakai mic iPhone.
+
+**Uji tanpa hardware** ([`tools/carplay_sim.py`](tools/carplay_sim.py)): `make-replay` membuat rekaman
+stream dongle; taruh di `Android/data/com.umox.app/files/carplay_replay.bin` dan UMOX memutarnya bila dongle
+tidak terpasang. `cluster 9527 out.h264` = mock speedometer yang memvalidasi framing Desay dan menyimpan video.
 
 ---
 
